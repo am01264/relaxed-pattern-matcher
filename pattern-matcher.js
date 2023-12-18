@@ -1,27 +1,9 @@
+export const $rest = Symbol("rest");
+export const failure = Symbol("failure");
 
+export function pattern(fnPattern) {
 
-const m = pattern(({sym}) => 
-    ({
-        name: "Bob",
-        relatives: {
-            cousin: sym("name")
-        }
-    })
-)
-
-
-console.log(m({
-    name: "Bob",
-    relatives: {
-        cousin: "Luka"
-    }
-}))
-
-
-
-function pattern(fnPattern) {
-
-    const symbols = new Map;
+    const symbols = new Map();
 
     const $ = {
 
@@ -34,7 +16,7 @@ function pattern(fnPattern) {
             return sym;
         },
 
-        $rest: Symbol("rest")
+        $rest
 
     }
 
@@ -43,10 +25,6 @@ function pattern(fnPattern) {
         Array.from(symbols.entries())
             .map(([name, symbol]) => [symbol, name])
     );
-
-    console.debug({
-        pattern, invertedMap
-    })
 
     return (thing) => matcher(invertedMap, pattern, thing);
 
@@ -58,86 +36,53 @@ function filterNotInList(exclusions) {
 
 function matcher(symbols, pattern, obj) {
 
-    console.debug({
-        symbols,
-        pattern, 
-        obj
-    })
-
-    const failure = undefined;
-    const $rest = Symbol("rest");
-
     switch (typeof pattern) {
 
         case "object":
 
-            if (Array.isArray(pattern)) {
-                return pattern.reduce((acc, pat, ixArr, arr) => {
-                    if (acc === failure) return failure;
-
-                    // TODO: Implement $rest pattern
-                    // if (pat === $rest) {
-                    //     value = obj.slice(ixArr)
-                    // }
-
-                    const application = matcher(symbols, pat, obj[ixArr]);
-                    
-                    if (application === failure) {
-                        return failure;
-                    } else {
-                        return new Map([...acc, ...application])
-                    }
-                    
-                }, new Map)
-
+            if (pattern === null) 
+            {
+                return (pattern === obj) 
+                    ? new Map
+                    : failure;
             }
-
+            else if (pattern instanceof Date) 
+            {
+                return (pattern.getTime() === obj?.getTime())
+                    ? new Map
+                    : failure;
+            }
+            else if (pattern instanceof RegExp)
+            {
+                return (pattern.toString() === obj?.toString())
+                    ? new Map
+                    : failure;
+            }
+            // TODO: Maps, WeakMaps, Sets & WeakSets - handle like Objects or Arrays
+            else if (Array.isArray(pattern)) 
+            {
+                return arrayMatcher(symbols, pattern, obj);
+            }
             else 
-                return Reflect
-                .ownKeys(pattern)
-                .reduce((acc, prop, ixArr, arr) => {
-                    if (acc === failure) return acc;
-
-                    let value = undefined;
-
-                    // TODO: Implement $rest pattern
-                    // if (prop === "$rest") {
-
-                    //     const visited = acc.slice(0, ixArr)
-
-                    //     value =  Reflect.ownKeys(obj)
-                    //                     .filter((prop) => ! visited.includes(prop))
-                    //                     .reduce((acc, prop) => {
-                    //                                 acc[prop] = obj[prop];
-                    //                                 return acc;
-                    //                             },
-                    //                             Object.create(null))
-
-                    // } else 
-                    if (prop in obj) { 
-                        value = obj[prop]
-                    } else {
-                        return failure;
-                    }
-
-                    const application = matcher(symbols, pattern[prop], value);
-                    
-                    if (application === failure) {
-                        return failure;
-                    }
-                    
-                    return new Map([...acc, ...application])
-                
-                }, new Map)
+            {
+                return objectMatcher(symbols, pattern, obj);
+            }
 
         case "symbol":
             // Handle mapping of symbols
 
-            if (symbols.has(pattern)) {
+            if (symbols.has(pattern)) 
+            {
                 return new Map([
                     [symbols.get(pattern),
                      obj]
                 ])
+            } 
+            else if (pattern === $rest)
+            {
+                // HACK: Doesn't seem to fit, but neither
+                // does a map as a return value
+                return new Map([ [$rest, obj] ])
             } 
 
             // fallthrough
@@ -155,3 +100,88 @@ function matcher(symbols, pattern, obj) {
     }
 
 }
+
+
+
+function arrayMatcher(symbols, pattern, obj) {
+
+    const results = [];
+
+    let ix;
+    for (ix = 0; ix < pattern.length; ix++) {
+        
+        if (! (ix in obj)) return failure;
+        
+        const pat = pattern[ix];
+        let value = obj[ix];
+
+        if (pat === $rest) {
+            // Rest parameters hoover up everything remaining
+            value = obj.slice(ix)
+            ix = pattern.length;
+        }
+        
+        const res = matcher(symbols, pat, value);
+
+        if (res === failure) {
+            return failure;
+        }
+
+        results.push(...res);
+
+    }
+
+    // Incomplete matches are failures
+    if (ix < pattern.length) return failure;
+
+    return new Map(results)
+
+}
+
+
+
+function objectMatcher(symbols, pattern, obj) {
+
+    const results = [];
+    const props = Reflect.ownKeys(pattern);
+
+    let ix;
+    for (ix = 0; ix < props.length; ix++) {
+        
+        const prop = props[ix];
+
+        const pat = pattern[prop];
+        let value;
+
+        if (prop === $rest) 
+        {
+            const visitedProps = props.slice(0, ix);
+            
+            value = 
+                Reflect.ownKeys(obj)
+                .filter(p => ! visitedProps.includes(p))
+                .reduce((newObj, p) => {
+                    newObj[p] = obj[p];
+                    return newObj;
+                }, Object.create(null))
+            
+            ix = props.length;
+        } 
+        else 
+        {
+            if (! (prop in obj)) return failure;
+            value = obj[prop];
+        }
+
+        const res = matcher(symbols, pat, value);
+
+        if (res === failure) return failure;
+        results.push(...res);
+    }
+    
+    // Incomplete matches are failures
+    if (ix < props.length) return failure;
+
+    return new Map(results)
+}
+

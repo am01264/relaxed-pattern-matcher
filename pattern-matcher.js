@@ -103,6 +103,88 @@ function matcher(symbols, pattern, obj) {
 
 
 
+/** Matches a given array pattern independent of where in
+ * the array the pattern may exist.
+ *
+ * Drop-in alternative to `arrayMatcher` */
+function relaxedArrayMatcher(symbols, pattern, obj) {
+
+    const potentialMatches = obj.length - pattern.length + 1;
+
+    const RESULT_SEARCH_FAILED = new Map;
+    const results = Array(potentialMatches)
+                    .fill(undefined)
+                    .map(v => new Map);
+
+    // We build a list of starting positions
+    const POSITION_SEARCH_FAILED = -1;
+    const positions =
+        new Int16Array(potentialMatches)
+        .map((_, ix) => ix)
+
+
+    // Then we loop through the pattern once
+    for (const pat of pattern) {
+
+        for (let px = 0; px < positions.length; px++) {
+            
+            const pos = positions[px];
+            if (pos >= obj.length) continue;
+            if (pos === POSITION_SEARCH_FAILED) continue;
+            
+            let value = obj[pos];
+
+            if (pat === $rest) {
+                // Rest parameters hoover up everything remaining
+                value = obj.slice(pos)
+                positions[px] = pattern.length;
+            }
+
+            const res = matcher(symbols, pat, value);
+
+            if (res instanceof Map) {
+                const resultStore = results[px];
+                for (const [sym, value] of res) {
+            
+                    // If this symbol has already been
+                    // recorded, then it's new value MUST
+                    // match the old value or it's
+                    // considered a failure
+                    if (resultStore.has(sym)
+                        && resultStore.get(sym) !== value) {
+                        res = failure;
+                        break;
+                    }
+    
+                    resultStore.set(sym, value);
+                }
+            }
+
+            // Deliberately not an else clause.
+            // `res` may have been updated by the above check.
+            if (res === failure) {
+                positions[px] = POSITION_SEARCH_FAILED;
+                results[px] = RESULT_SEARCH_FAILED;
+                continue;
+            } 
+                
+            positions[px]++
+
+        }
+
+    }
+
+    // Return the first successful match if it exists
+    // ...or failure
+    return results
+        .filter(arr => arr !== RESULT_SEARCH_FAILED)
+        ?.[0]
+        ?? failure
+
+}
+
+
+
 /** Matches a given array in the order of the pattern */
 function arrayMatcher(symbols, pattern, obj) {
 

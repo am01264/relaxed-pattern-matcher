@@ -30,9 +30,10 @@ export function pattern(fnPattern) {
 
 }
 
-function filterNotInList(exclusions) {
-    return (val) => ! exclusions.includes(val)
-}
+
+
+
+
 
 function matcher(symbols, pattern, obj) {
 
@@ -247,23 +248,21 @@ function objectMatcher(symbols, pattern, obj) {
         const pat = pattern[prop];
         let value;
 
-        if (prop === $rest) 
-        {
+        if (prop === $rest) {
             const visitedProps = props.slice(0, ix);
             
-            value = 
+            value =
                 Reflect.ownKeys(obj)
-                .filter(p => ! visitedProps.includes(p))
-                .reduce((newObj, p) => {
-                    newObj[p] = obj[p];
-                    return newObj;
-                }, Object.create(null))
+                    .filter(p => !visitedProps.includes(p))
+                    .reduce((newObj, p) => {
+                        newObj[p] = obj[p];
+                        return newObj;
+                    }, Object.create(null))
             
             ix = props.length;
-        } 
-        else 
-        {
-            if (! (prop in obj)) return failure;
+        }
+        else {
+            if (!(prop in obj)) return failure;
             value = obj[prop];
         }
 
@@ -277,17 +276,17 @@ function objectMatcher(symbols, pattern, obj) {
             // then it's new value MUST match the old value
             // or it's considered a failure
             if (results.has(sym)
-                && results.get(sym) !== value)
-            {
+                && results.get(sym) !== value) {
                 return failure;
             }
 
             results.set(sym, value);
         }
     
-    // Incomplete matches are failures
-    if (ix < props.length) return failure;
+        // Incomplete matches are failures
+        if (ix < props.length) return failure;
 
-    return results
+        return results
+    }
+
 }
-

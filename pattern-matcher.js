@@ -103,9 +103,10 @@ function matcher(symbols, pattern, obj) {
 
 
 
+/** Matches a given array in the order of the pattern */
 function arrayMatcher(symbols, pattern, obj) {
 
-    const results = [];
+    const results = new Map;
 
     let ix;
     for (ix = 0; ix < pattern.length; ix++) {
@@ -127,14 +128,25 @@ function arrayMatcher(symbols, pattern, obj) {
             return failure;
         }
 
-        results.push(...res);
+        for (const [sym, value] of res) {
+            
+            // If this symbol has already been recorded, 
+            // then it's new value MUST match the old value
+            // or it's considered a failure
+            if (results.has(sym)
+                && results.get(sym) !== value)
+            {
+                return failure;
+            }
 
+            results.set(sym, value);
+        }
     }
 
     // Incomplete matches are failures
     if (ix < pattern.length) return failure;
 
-    return new Map(results)
+    return results
 
 }
 
@@ -142,7 +154,7 @@ function arrayMatcher(symbols, pattern, obj) {
 
 function objectMatcher(symbols, pattern, obj) {
 
-    const results = [];
+    const results = new Map;
     const props = Reflect.ownKeys(pattern);
 
     let ix;
@@ -176,12 +188,24 @@ function objectMatcher(symbols, pattern, obj) {
         const res = matcher(symbols, pat, value);
 
         if (res === failure) return failure;
-        results.push(...res);
-    }
+
+        for (const [sym, value] of res) {
+
+            // If this symbol has already been recorded, 
+            // then it's new value MUST match the old value
+            // or it's considered a failure
+            if (results.has(sym)
+                && results.get(sym) !== value)
+            {
+                return failure;
+            }
+
+            results.set(sym, value);
+        }
     
     // Incomplete matches are failures
     if (ix < props.length) return failure;
 
-    return new Map(results)
+    return results
 }
 

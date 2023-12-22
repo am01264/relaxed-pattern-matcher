@@ -55,7 +55,12 @@ function matcher(symbols, pattern, obj) {
             }
             else if (pattern instanceof RegExp)
             {
-                return (pattern.toString() === obj?.toString())
+                return (
+                        // Identical expression
+                        pattern.toString() === obj?.toString()
+                        // Or RegExp match
+                        || pattern.test(obj)
+                    )
                     ? new Map
                     : failure;
             }

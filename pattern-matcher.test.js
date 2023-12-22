@@ -183,3 +183,19 @@ Deno.test("Should fail without error when object compared against primitive", ()
     )
 
 })
+
+
+
+
+Deno.test("tests RegExp patterns against given text", () => {
+
+    const rx = /^hello\s+.*$/ig;
+    const matcher = pattern(() => rx);
+
+    const literal = matcher(rx.toString());
+    assertEquals(literal instanceof Map, true);
+
+    const metaphorical = matcher('Hello world');
+    assertEquals(literal instanceof Map, true);
+
+})

@@ -145,3 +145,27 @@ Deno.test('does not walk prototype chain', () => {
 
     assertEquals(result, failure)
 })
+
+
+Deno.test('should match a specific pattern', () => {
+
+    const measure = Symbol.for("measure");
+     
+    const ast = (type, value) => ({ type, value });
+
+    const matcher = pattern(({ sym }) => [
+        ast(measure, sym("first")),
+        { value: "x" },
+        ast(measure, sym("second"))
+    ]);
+        
+    const result = matcher([
+        ast(measure, '4cm'),
+        ast(undefined, 'x'),
+        ast(measure, '4.5cm')
+    ])
+
+    assertEquals(result.get('first'), '4cm')
+    assertEquals(result.get('second'), '4.5cm')
+
+})

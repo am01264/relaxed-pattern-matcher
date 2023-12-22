@@ -283,10 +283,11 @@ function objectMatcher(symbols, pattern, obj) {
             results.set(sym, value);
         }
     
-        // Incomplete matches are failures
-        if (ix < props.length) return failure;
-
-        return results
     }
+    
+    // Incomplete matches are failures
+    if (ix < props.length) return failure;
 
+    return results
+    
 }

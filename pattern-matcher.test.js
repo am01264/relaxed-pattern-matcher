@@ -98,7 +98,7 @@ Deno.test('should match two identical pattern symbols with identical results in 
 });
 
 
-Deno.test('should match pattern with array when first element does not match', () => {
+Deno.test('should fail pattern when first element of an array does not match', () => {
 
     // Test should only pass if relaxedArrayMatcher is used in place of arrayMatcher.
 
@@ -109,8 +109,7 @@ Deno.test('should match pattern with array when first element does not match', (
             $rest
         ])
     const result = d(['badApple', 'one', 'dos', 'drie']);
-    assertEquals(result.get('second'), 'dos');
-    assertEquals(result.get($rest), ['drie']);
+    assertEquals(result, failure);
 });
 
 
@@ -167,5 +166,20 @@ Deno.test('should match a specific pattern', () => {
 
     assertEquals(result.get('first'), '4cm')
     assertEquals(result.get('second'), '4.5cm')
+
+})
+
+
+Deno.test("Should fail without error when object compared against primitive", () => {
+
+    assertEquals(
+        pattern(() => ({ prop: "" }))(undefined),
+        failure
+    )
+
+    assertEquals(
+        pattern(() => [ "value" ])(undefined),
+        failure 
+    )
 
 })

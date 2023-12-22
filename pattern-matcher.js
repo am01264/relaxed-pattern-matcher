@@ -189,11 +189,13 @@ function relaxedArrayMatcher(symbols, pattern, obj) {
 /** Matches a given array in the order of the pattern */
 function arrayMatcher(symbols, pattern, obj) {
 
+    if (typeof obj !== "object") return failure;
+
     const results = new Map;
 
     let ix;
     for (ix = 0; ix < pattern.length; ix++) {
-        
+
         if (! (ix in obj)) return failure;
         
         const pat = pattern[ix];
@@ -237,6 +239,8 @@ function arrayMatcher(symbols, pattern, obj) {
 
 function objectMatcher(symbols, pattern, obj) {
 
+    if (typeof obj !== "object") return failure;
+
     const results = new Map;
     const props = Reflect.ownKeys(pattern);
 
@@ -249,6 +253,8 @@ function objectMatcher(symbols, pattern, obj) {
         let value;
 
         if (prop === $rest) {
+            // $rest hoovers up all properties not yet visited
+            
             const visitedProps = props.slice(0, ix);
             
             value =
@@ -261,7 +267,8 @@ function objectMatcher(symbols, pattern, obj) {
             
             ix = props.length;
         }
-        else {
+        else
+        {
             if (!(prop in obj)) return failure;
             value = obj[prop];
         }

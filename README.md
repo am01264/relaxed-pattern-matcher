@@ -49,7 +49,7 @@ Maps, Sets and their Weak variants are currently not handled, but can be easily 
 // Task: 
 // Given a persons details, extract the name of their cousin
 
-import {pattern} from "..."
+import {pattern} from "./pattern-matcher.js";
 
 const matcherUpper = pattern(({sym}) => 
     ({
@@ -81,7 +81,7 @@ result.get('name') // => "James"
 // Given a potential sales lead, extract all contact 
 // information except for their name
 
-import {pattern} from "...";
+import {pattern} from "./pattern-matcher.js";
 
 const j = pattern(({sym, $rest}) => 
     ({
@@ -111,7 +111,7 @@ result.get('contactInfo');
 // Task:
 // Given a persons favourite film, judge them 
 
-import {pattern, failure} from "..."
+import {pattern, failure} from "./pattern-matcher.js";
 
 const matcher = pattern(() => "Pulp Fiction");
 
@@ -132,7 +132,7 @@ if (result !== failure) {
 // Task:
 // Given the first two words of a rhyme, let me know the rest
 
-import {pattern, $rest} from "..."
+import {pattern, $rest} from "./pattern-matcher.js";
 
 const input = [ "one", "two", "miss", "a", "few" ];
 
@@ -182,7 +182,7 @@ function withName() {
 // Task: 
 // Identify pairs of fighters, and put together a match title
 
-import {pattern} from "..."
+import {pattern} from "./pattern-matcher.js";
 
 class Fighter {
     constructor(name) {
@@ -215,7 +215,7 @@ console.log(
 ```
 
 
-### Check for Same Value in Multiple Places 
+### Multiple Property Extraction
 
 ```javascript
 // Task:
@@ -266,6 +266,8 @@ if (result.get('stressLevel') > stressThreshold) {
 ```javascript
 // Task: A number multiplied by itself is squared. Identify 
 //       whether a set of tokens is a squared number. 
+
+import { pattern, failure } from "./pattern-matcher.js"
 
 const input = [4, '*', 4];
 

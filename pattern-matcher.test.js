@@ -1,5 +1,5 @@
 import { $rest, failure, pattern } from './pattern-matcher.js';
-import { assertEquals } from "https://deno.land/std@0.209.0/assert/assert_equals.ts";
+import { assertEquals, assertInstanceOf } from "https://deno.land/std@0.209.0/assert/mod.ts";
 
 Deno.test('should match pattern with object', () => {
     const m = pattern(({sym}) => 
@@ -193,9 +193,25 @@ Deno.test("tests RegExp patterns against given text", () => {
     const matcher = pattern(() => rx);
 
     const literal = matcher(rx.toString());
-    assertEquals(literal instanceof Map, true);
+    assertInstanceOf(literal, Map);
 
     const metaphorical = matcher('Hello world');
-    assertEquals(literal instanceof Map, true);
+    assertInstanceOf(literal, Map);
 
+})
+
+
+
+
+
+Deno.test("Matches TypedArrays", () => {
+
+    const matcher = pattern(() =>
+        new Uint8Array([0, 1, 2]))
+    
+    const result = matcher(
+        new Uint16Array([0, 1, 2]))
+
+    assertInstanceOf(result, Map);
+    
 })

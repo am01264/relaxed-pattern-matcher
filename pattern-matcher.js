@@ -65,7 +65,20 @@ function matcher(symbols, pattern, obj) {
                     : failure;
             }
             // TODO: Maps, WeakMaps, Sets & WeakSets - handle like Objects or Arrays
-            else if (Array.isArray(pattern)) 
+            else if (
+                Array.isArray(pattern)
+                || pattern instanceof Int8Array
+                || pattern instanceof Uint8Array
+                || pattern instanceof Uint8ClampedArray
+                || pattern instanceof Int16Array
+                || pattern instanceof Uint16Array
+                || pattern instanceof Int32Array
+                || pattern instanceof Uint32Array
+                || pattern instanceof BigInt64Array
+                || pattern instanceof BigUint64Array
+                || pattern instanceof Float32Array
+                || pattern instanceof Float64Array
+                )
             {
                 return arrayMatcher(symbols, pattern, obj);
             }
@@ -208,7 +221,9 @@ function arrayMatcher(symbols, pattern, obj) {
 
         if (pat === $rest) {
             // Rest parameters hoover up everything remaining
-            value = obj.slice(ix)
+            // - we use the Array function to allow array-like objects
+            value = Array.prototype.slice.call(obj, ix)
+
             ix = pattern.length;
         }
         

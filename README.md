@@ -4,6 +4,11 @@ This is a pattern matcher for JavaScript which can walk nested objects and array
 
 Requires ES6+ as it uses Symbols for placeholders behind the scenes.
 
+This library has been developed with flexibility first. This makes using it securely more challenging but not impossible. Two rules of thumb to keep in mind: 
+1. Only use with patterns you trust
+2. Self-referential patterns can cause call stack exhaustion
+
+
 ## How To Use
 
 Only one function is directly exposed:

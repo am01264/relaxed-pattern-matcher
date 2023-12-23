@@ -1,8 +1,9 @@
 import { $rest, failure, pattern } from './pattern-matcher.js';
 import { assertEquals, assertInstanceOf } from "https://deno.land/std@0.209.0/assert/mod.ts";
 
-Deno.test('should match pattern with object', () => {
-    const m = pattern(({sym}) => 
+Deno.test('pattern should match object', () => {
+
+    const matcher = pattern(({sym}) => 
         ({
             name: "Bob",
             relatives: {
@@ -10,47 +11,58 @@ Deno.test('should match pattern with object', () => {
             }
         })
     )
-    const result = m({
+
+    const result = matcher({
         name: "Bob",
         relatives: {
             cousin: "James"
         }
     });
+
     assertEquals(result.get('name'), 'James');
+
 });
 
-Deno.test('should match pattern with array', () => {
-    const d = pattern(({sym, $rest}) =>
+Deno.test('pattern should match array', () => {
+
+    const matcher = pattern(({ sym, $rest }) =>
         [
             sym("first"),
             $rest
-        ])
-    const result = d(['one', 'dos', 'drie']);
+        ]);
+    
+    const result = matcher(['one', 'dos', 'drie']);
     assertEquals(result.get('first'), 'one');
     assertEquals(result.get($rest), ['dos', 'drie']);
+
 });
 
 
-Deno.test('should match pattern with rest in object', () => {
-    const j = pattern(({sym, $rest}) => 
+Deno.test('rest pattern should match object', () => {
+    
+    const matcher = pattern(({ sym, $rest }) => 
         ({
             name: "Sarah",
             [$rest]: sym("deets")
         })
     )
-    const result = j({
+
+    const result = matcher({
         name: "Sarah",
         tel: "01234 567 980",
         address: "123 Keep Reading Me, Nowhere"
     });
+
     assertEquals(result.get('deets'), {
         tel: "01234 567 980",
         address: "123 Keep Reading Me, Nowhere"
     });
+
 });
 
-Deno.test('should return failure when pattern does not match', () => {
-    const m = pattern(({sym}) => 
+Deno.test('pattern fails without match', () => {
+    
+    const matcher = pattern(({ sym }) => 
         ({
             name: "Bob",
             relatives: {
@@ -58,47 +70,57 @@ Deno.test('should return failure when pattern does not match', () => {
             }
         })
     )
-    const result = m({
+    
+    const result = matcher({
         name: "WrongName",
         relatives: {
             cousin: "James"
         }
     });
+
     assertEquals(result, failure);
+
 });
 
 
-Deno.test('should return failure when two identical pattern symbols do not match in a given thing', () => {
-    const m = pattern(({sym}) => 
+Deno.test('Multiple sym(name) cause failure with differing matches', () => {
+    
+    const match = pattern(({ sym }) => 
         ({
             x: sym("diff"),
             y: sym("diff")
         })
     )
-    const result = m({
+
+    const result = match({
         x: 1,
         y: 2
     });
+
     assertEquals(result, failure);
 });
 
 
-Deno.test('should match two identical pattern symbols with identical results in a given thing', () => {
-    const m = pattern(({sym}) => 
+Deno.test('Multiple sym(name) matches with identical matches', () => {
+    
+    const m = pattern(({ sym }) => 
         ({
             x: sym("same"),
             y: sym("same")
         })
     )
+    
     const result = m({
         x: 1,
         y: 1
     });
+
     assertEquals(result.get('same'), 1);
+
 });
 
 
-Deno.test('should fail pattern when first element of an array does not match', () => {
+Deno.test('pattern fails when first element of an array does not match', () => {
 
     // Test should only pass if relaxedArrayMatcher is used in place of arrayMatcher.
 
@@ -113,7 +135,7 @@ Deno.test('should fail pattern when first element of an array does not match', (
 });
 
 
-Deno.test('should match pattern with multiple object children', () => {
+Deno.test('pattern matches with multiple object children', () => {
     const mockAst = (type, value) => ({ type, value })
 
     const p = pattern(({ sym }) => [
@@ -132,7 +154,7 @@ Deno.test('should match pattern with multiple object children', () => {
 })
 
 
-Deno.test('should match a specific pattern', () => {
+Deno.test('Error Case: Dimension AST pattern should match object', () => {
 
     const measure = Symbol.for("measure");
      
@@ -156,7 +178,7 @@ Deno.test('should match a specific pattern', () => {
 })
 
 
-Deno.test("Should fail without error when object compared against primitive", () => {
+Deno.test("Error Case: Object patterns should fail politely against primitives", () => {
 
     assertEquals(
         pattern(() => ({ prop: "" }))(undefined),
@@ -171,9 +193,7 @@ Deno.test("Should fail without error when object compared against primitive", ()
 })
 
 
-
-
-Deno.test("tests RegExp patterns against given text", () => {
+Deno.test("RegExp patterns should match literally and test against strings", () => {
 
     const rx = /^hello\s+.*$/ig;
     const matcher = pattern(() => rx);

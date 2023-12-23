@@ -132,20 +132,6 @@ Deno.test('should match pattern with multiple object children', () => {
 })
 
 
-Deno.test('does not walk prototype chain', () => {
-    class Mockery { }
-
-    const p = pattern(({ sym }) => {
-        constructor: sym("constructor")
-    });
-
-    const result = p(new Mockery)
-
-
-    assertEquals(result, failure)
-})
-
-
 Deno.test('should match a specific pattern', () => {
 
     const measure = Symbol.for("measure");

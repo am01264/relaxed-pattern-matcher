@@ -1,5 +1,5 @@
 import { $rest, failure, pattern } from './pattern-matcher.js';
-import { assertEquals, assertInstanceOf } from "https://deno.land/std@0.209.0/assert/mod.ts";
+import { assertEquals, assertInstanceOf, assertArrayIncludes } from "https://deno.land/std@0.209.0/assert/mod.ts";
 
 Deno.test('pattern should match object', () => {
 
@@ -189,6 +189,24 @@ Deno.test("Error Case: Object patterns should fail politely against primitives",
         pattern(() => [ "value" ])(undefined),
         failure 
     )
+
+})
+
+
+
+Deno.test("Matches array pattern after a $rest element", () => {
+
+    /** [1...100] */
+    const input = Array(100).fill(0).map((_, ix) => ix + 1);
+    const compare = input.slice(2, 98);
+
+    const matcher = pattern(({ rest }) =>
+        [1, 2, $rest, 99, 100])
+    
+    const result = matcher(input);
+
+    assertArrayIncludes(result.get($rest), compare)
+    assertEquals(result.get($rest).length, compare.length)
 
 })
 

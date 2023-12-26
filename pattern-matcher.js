@@ -211,21 +211,48 @@ function arrayMatcher(symbols, pattern, obj) {
 
     const results = new Map;
 
-    let ix;
-    for (ix = 0; ix < pattern.length; ix++) {
+    let ixPattern;
+    let ixObj;
 
-        if (! (ix in obj)) return failure;
+    // We loop through both arrays at once. If we hit a
+    // $rest element, we consume everything minus the last
+    // few required to match the final half of the pattern,
+    // if present. When that happens, ixPattern and ixObj
+    // will no longer be identical
+    //
+    // A complex $rest pattern might look like: 
+    //      [1, 2, $rest, 99, 100]
+    
+    for (ixPattern = 0, ixObj = 0;
+        ixPattern < pattern.length && ixObj < obj.length;
+        ixPattern++, ixObj++
+    ) {
+
+        if (! (ixObj in obj)) return failure;
         
-        const pat = pattern[ix];
-        let value = obj[ix];
+        const pat = pattern[ixPattern];
+        let value = obj[ixObj];
 
         if (pat === $rest) {
-            // Rest parameters hoover up everything remaining
-            // - we use the Array function to allow array-like objects
-            value = Array.prototype.slice.call(obj, ix)
+    
+            const beginRestRangeIndex = ixPattern;
+            const endRestRangeIndex = 
+                1 + obj.length - (pattern.length - ixPattern)
 
-            ix = pattern.length;
-        }
+            if (endRestRangeIndex < beginRestRangeIndex) {
+                // Not enough elements to match the given pattern
+                return failure;
+            }
+            
+            value = Array.prototype.slice.call(
+                obj,
+                beginRestRangeIndex,
+                endRestRangeIndex
+            )
+
+            ixObj = endRestRangeIndex - 1;
+
+        };
         
         const res = matcher(symbols, pat, value);
 
@@ -249,7 +276,7 @@ function arrayMatcher(symbols, pattern, obj) {
     }
 
     // Incomplete matches are failures
-    if (ix < pattern.length) return failure;
+    if (ixPattern < pattern.length) return failure;
 
     return results
 
